@@ -23,3 +23,11 @@
 target/
 logs/
 test-output/
+
+# Docker volumes and data
+docker-data/
+*.env.local
+
+# IDE files
+.vscode/
+.trackify.jsonl

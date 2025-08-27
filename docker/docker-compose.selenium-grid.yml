@@ -1,0 +1,78 @@
+# Docker Compose for Selenium Grid with Hub and Nodes
+version: '3.8'
+
+services:
+  # Selenium Grid Hub
+  selenium-hub:
+    image: selenium/hub:4.11.0
+    container_name: selenium-hub
+    ports:
+      - "4444:4444"
+    environment:
+      - GRID_MAX_SESSION=16
+      - GRID_BROWSER_TIMEOUT=300
+      - GRID_TIMEOUT=300
+    networks:
+      - selenium-grid
+    volumes:
+      - /dev/shm:/dev/shm
+
+  # Chrome Node
+  chrome-node:
+    image: selenium/node-chrome:4.11.0
+    platform: linux/amd64
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+      - NODE_MAX_INSTANCES=2
+      - NODE_MAX_SESSION=2
+    networks:
+      - selenium-grid
+    deploy:
+      replicas: 2
+
+  # Firefox Node
+  firefox-node:
+    image: selenium/node-firefox:4.11.0
+    platform: linux/amd64
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+      - NODE_MAX_INSTANCES=2
+      - NODE_MAX_SESSION=2
+    networks:
+      - selenium-grid
+    deploy:
+      replicas: 1
+
+  # Edge Node (Optional)
+  edge-node:
+    image: selenium/node-edge:4.11.0
+    platform: linux/amd64
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+      - NODE_MAX_INSTANCES=1
+      - NODE_MAX_SESSION=1
+    networks:
+      - selenium-grid
+    deploy:
+      replicas: 1
+    profiles:
+      - full  # Only start with 'docker-compose --profile full up'
+
+networks:
+  selenium-grid:
+    driver: bridge
+
+volumes:
+  selenium-data:

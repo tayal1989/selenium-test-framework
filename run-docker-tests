@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Convenient wrapper script for Docker Selenium tests
+# Usage: ./run-docker-tests [command] [options]
+
+cd "$(dirname "$0")"
+
+case "$1" in
+    "start")
+        ./scripts/start-selenium.sh
+        ;;
+    "stop")
+        ./scripts/stop-selenium.sh
+        ;;
+    "test")
+        shift # Remove 'test' from arguments
+        ./scripts/run-tests.sh "$@"
+        ;;
+    "vnc")
+        echo "🖥️  Opening VNC Viewer..."
+        open http://localhost:7900
+        echo "VNC Password: secret"
+        ;;
+    "grid")
+        echo "🌐 Opening Selenium Grid Console..."
+        open http://localhost:4444
+        ;;
+    "logs")
+        echo "📋 Showing container logs..."
+        docker logs selenium-chrome
+        ;;
+    "status")
+        if [ "$(docker ps -q -f name=selenium-chrome)" ]; then
+            echo "✅ Selenium Chrome container is running"
+            curl -s http://localhost:4444/wd/hub/status | python3 -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    print(f'🌐 Grid Status: {data[\"value\"][\"message\"]}')
+    nodes = data['value']['nodes']
+    print(f'📊 Available Nodes: {len(nodes)}')
+    for node in nodes:
+        print(f'   - {node[\"osInfo\"][\"name\"]} {node[\"osInfo\"][\"arch\"]} - {node[\"availability\"]}')
+except:
+    print('❌ Could not get grid status')
+"
+        else
+            echo "❌ Selenium Chrome container is not running"
+        fi
+        ;;
+    "clean")
+        echo "🧹 Cleaning up Docker resources..."
+        docker stop selenium-chrome 2>/dev/null || true
+        docker rm selenium-chrome 2>/dev/null || true
+        docker system prune -f
+        echo "✅ Cleanup completed"
+        ;;
+    *)
+        echo "🐳 Docker Selenium Test Runner"
+        echo ""
+        echo "Usage: $0 {start|stop|test|vnc|grid|logs|status|clean}"
+        echo ""
+        echo "Commands:"
+        echo "  start    - Start Selenium Chrome container"
+        echo "  stop     - Stop Selenium Chrome container" 
+        echo "  test     - Run tests against Docker container"
+        echo "  vnc      - Open VNC viewer in browser"
+        echo "  grid     - Open Selenium Grid console"
+        echo "  logs     - Show container logs"
+        echo "  status   - Show container and grid status"
+        echo "  clean    - Clean up Docker resources"
+        echo ""
+        echo "Examples:"
+        echo "  $0 start                     # Start Selenium container"
+        echo "  $0 test                      # Run all Docker demo tests"
+        echo "  $0 test GoogleSearchTest     # Run specific test class"
+        echo "  $0 vnc                       # Watch tests run in browser"
+        echo "  $0 status                    # Check container status"
+        exit 1
+        ;;
+esac

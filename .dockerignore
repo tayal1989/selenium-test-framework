@@ -1,0 +1,39 @@
+# .dockerignore for Selenium Test Framework
+
+# Build artifacts
+target/
+test-output/
+logs/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Maven wrapper
+.mvn/
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Other
+README.md
+*.md

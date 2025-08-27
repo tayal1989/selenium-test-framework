@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  selenium-tests:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: selenium-test-framework
+    volumes:
+      - ./target:/app/target
+      - ./test-output:/app/test-output
+      - ./logs:/app/logs
+    environment:
+      - DISPLAY=:99
+      - MAVEN_OPTS=-Xmx1024m
+    networks:
+      - selenium-network
+
+  # Selenium Standalone Chrome with VNC
+  selenium-chrome:
+    image: selenium/standalone-chrome:latest
+    platform: linux/amd64
+    container_name: selenium-chrome
+    ports:
+      - "4444:4444"   # Selenium WebDriver
+      - "7900:7900"   # VNC Server (password: secret)
+    shm_size: 2gb
+    environment:
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_SESSION_TIMEOUT=300
+    networks:
+      - selenium-network
+    volumes:
+      - /dev/shm:/dev/shm
+
+  # Firefox Node for Selenium Grid
+  firefox-node:
+    image: selenium/node-firefox:4.11.0
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+      - NODE_MAX_INSTANCES=2
+      - NODE_MAX_SESSION=2
+    networks:
+      - selenium-network
+
+networks:
+  selenium-network:
+    driver: bridge
+
+volumes:
+  test-results:
